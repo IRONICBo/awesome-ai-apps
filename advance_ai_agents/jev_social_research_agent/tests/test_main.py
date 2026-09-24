@@ -61,8 +61,9 @@ class ExecutionTests(unittest.TestCase):
             "import json, os, sys\n"
             "assert 'OPENROUTER_API_KEY' not in os.environ\n"
             "assert sys.argv[1:3] == ['tiktok', 'search']\n"
-            "assert sys.argv[3] == '--help; touch /tmp/not-executed'\n"
-            "assert sys.argv[4:] == ['--num', '4', '--pretty']\n"
+            "assert sys.argv[3:6] == ['--num', '4', '--pretty']\n"
+            "assert sys.argv[6] == '--'\n"
+            "assert sys.argv[7] == '--help; touch /tmp/not-executed'\n"
             "print(json.dumps({'results': ["
             "{'username': 'maker', 'caption': 'Useful demo', "
             "'url': 'https://www.tiktok.com/@maker/video/1', "
@@ -79,10 +80,12 @@ class ExecutionTests(unittest.TestCase):
                 str(executable), "tiktok", "--help; touch /tmp/not-executed", 4
             )
             self.assertEqual(command[1:3], ["tiktok", "search"])
-            self.assertEqual(command[3], "--help; touch /tmp/not-executed")
+            self.assertEqual(command[3:6], ["--num", "4", "--pretty"])
+            self.assertEqual(command[6], "--")
+            self.assertEqual(command[7], "--help; touch /tmp/not-executed")
             with patch.dict(os.environ, {"OPENROUTER_API_KEY": "do-not-forward"}):
                 payload, _elapsed = MODULE.run_socai(
-                    str(executable), "tiktok", command[3], 4
+                    str(executable), "tiktok", command[7], 4
                 )
             items = MODULE.project_records(payload, "tiktok", 4)
             self.assertEqual(len(items), 1)
@@ -156,6 +159,11 @@ class ExecutionTests(unittest.TestCase):
 
 
 class EvidenceTests(unittest.TestCase):
+    def test_safe_text_preserves_neutralized_urls(self) -> None:
+        rendered = MODULE.safe_text("visit https://example.com/#topic")
+        self.assertEqual(rendered, "visit https&#58;//example.com/\\#topic")
+        self.assertNotIn("&\\#58;", rendered)
+
     def test_filters_wrong_hosts_and_neutralizes_markdown(self) -> None:
         payload = {
             "results": [

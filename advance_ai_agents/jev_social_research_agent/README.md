@@ -54,9 +54,22 @@ The model never writes a command. Its answer is accepted only when it matches th
 
 ### Environment Variables
 
+#### Bash
+
 ```bash
 cp .env.example .env
 set -a && source .env && set +a
+```
+
+#### PowerShell
+
+```powershell
+Copy-Item .env.example .env
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^\s*([^#][^=]*)=(.*)$') {
+    [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim(), 'Process')
+  }
+}
 ```
 
 ```env
@@ -69,12 +82,24 @@ SOCAI_BIN=socai
 
 ### Installation
 
+#### Bash
+
 ```bash
 git clone https://github.com/Arindam200/awesome-ai-apps.git
 cd awesome-ai-apps/advance_ai_agents/jev_social_research_agent
 python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
+```
+
+#### PowerShell
+
+```powershell
+git clone https://github.com/Arindam200/awesome-ai-apps.git
+Set-Location awesome-ai-apps/advance_ai_agents/jev_social_research_agent
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+py -m pip install -r requirements.txt
 ```
 
 ## ⚙️ Usage

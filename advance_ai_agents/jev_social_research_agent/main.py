@@ -198,7 +198,16 @@ def build_socai_command(
         raise JevSocialError("Refusing to build a command for an unsupported platform.")
     if not 1 <= limit <= 20:
         raise JevSocialError("Result limit must be between 1 and 20.")
-    return [executable, platform, "search", goal, "--num", str(limit), "--pretty"]
+    return [
+        executable,
+        platform,
+        "search",
+        "--num",
+        str(limit),
+        "--pretty",
+        "--",
+        goal,
+    ]
 
 
 def collect_bounded(
@@ -366,9 +375,9 @@ def safe_text(value: str, width: int = 180) -> str:
     """Bound and neutralize untrusted text before Markdown rendering."""
     cleaned = " ".join(value.split())
     shortened = cleaned if len(cleaned) <= width else f"{cleaned[: width - 1].rstrip()}…"
-    shortened = shortened.replace("://", "&#58;//")
     for marker in ("\\", "|", "[", "]", "*", "_", "`", "<", ">", "~", "#"):
         shortened = shortened.replace(marker, f"\\{marker}")
+    shortened = shortened.replace("://", "&#58;//")
     return shortened
 
 
