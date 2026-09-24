@@ -108,6 +108,7 @@ Run the complete offline demo first:
 
 ```bash
 python main.py "Find emerging AI creator formats on Instagram" --fixture
+python main.py "Find emerging AI creator formats on Instagram" --fixture --format json --output report.json
 ```
 
 Run a live, bounded search:
@@ -116,13 +117,13 @@ Run a live, bounded search:
 python main.py "Find emerging AI creators on TikTok" --platform auto --limit 4
 ```
 
-Write the same evidence-only report to disk:
+Write the same evidence-only Markdown report to disk:
 
 ```bash
 python main.py "Compare AI creator formats on Instagram" --limit 4 --output report.md
 ```
 
-The live command prints only the projected report. It does not print the raw socai response, local artifact paths, the full command, or browser diagnostics.
+Use `--format json --output report.json` for the stable machine-readable schema. The live command prints only the projected report. It does not print the raw socai response, local artifact paths, the full command, or browser diagnostics.
 
 ### Test
 
@@ -130,7 +131,7 @@ The live command prints only the projected report. It does not print the raw soc
 python -m unittest discover -s tests -v
 ```
 
-The tests cover malformed Jev output, explicit-route conflicts, shell-like query text, credential isolation, bounded subprocess output, URL filtering, Markdown neutralization, and the offline end-to-end path.
+The tests cover malformed Jev output, explicit-route conflicts, shell-like query text, credential isolation, bounded subprocess output, URL filtering, Markdown neutralization, deterministic JSON output, and the offline end-to-end path.
 
 ## Example output
 

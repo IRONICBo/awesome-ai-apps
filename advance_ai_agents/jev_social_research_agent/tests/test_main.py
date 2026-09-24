@@ -204,6 +204,32 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("local_path", report)
         self.assertNotIn("raw_debug", report)
 
+    def test_fixture_json_report_has_stable_public_schema(self) -> None:
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            status = MODULE.main(
+                [
+                    "Find emerging AI creator formats on Instagram",
+                    "--fixture",
+                    "--format",
+                    "json",
+                ]
+            )
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(report["schema_version"], 1)
+        self.assertEqual(report["route"]["platform"], "instagram")
+        self.assertEqual(report["result_count"], 4)
+        self.assertEqual(len(report["evidence"]), 4)
+        self.assertTrue(
+            all(
+                item["url"].startswith("https://www.instagram.com/")
+                for item in report["evidence"]
+            )
+        )
+        self.assertNotIn("local_path", json.dumps(report))
+        self.assertNotIn("raw_debug", json.dumps(report))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -371,10 +371,15 @@ def scalar(value: Any) -> str:
     return ""
 
 
+def compact_text(value: str, width: int = 180) -> str:
+    """Normalize whitespace and bound an untrusted public text field."""
+    cleaned = " ".join(value.split())
+    return cleaned if len(cleaned) <= width else f"{cleaned[: width - 1].rstrip()}…"
+
+
 def safe_text(value: str, width: int = 180) -> str:
     """Bound and neutralize untrusted text before Markdown rendering."""
-    cleaned = " ".join(value.split())
-    shortened = cleaned if len(cleaned) <= width else f"{cleaned[: width - 1].rstrip()}…"
+    shortened = compact_text(value, width)
     for marker in ("\\", "|", "[", "]", "*", "_", "`", "<", ">", "~", "#"):
         shortened = shortened.replace(marker, f"\\{marker}")
     shortened = shortened.replace("://", "&#58;//")
@@ -399,7 +404,7 @@ def project_records(payload: Any, platform: str, limit: int) -> list[dict[str, s
         for key in PUBLIC_FIELDS:
             value = scalar(record.get(key))
             if value:
-                item[key] = safe_text(value)
+                item[key] = compact_text(value)
         projected.append(item)
         if len(projected) >= limit:
             break
@@ -483,8 +488,10 @@ def build_report(
     if items:
         lines.extend(["## Findings", ""])
         for index, item in enumerate(items, 1):
-            author = first(item, ("author", "username", "nickname"))
-            evidence = first(item, ("title", "caption", "description", "text"))
+            author = safe_text(first(item, ("author", "username", "nickname")))
+            evidence = safe_text(
+                first(item, ("title", "caption", "description", "text"))
+            )
             lines.append(
                 f"{index}. **{author}:** {evidence} "
                 f"([source]({markdown_url(item['url'])}))"
@@ -503,11 +510,11 @@ def build_report(
                 "| {index} | {author} | {format} | {likes} | {comments} | {views} | "
                 "[Open]({url}) |".format(
                     index=index,
-                    author=first(item, ("author", "username", "nickname")),
-                    format=first(item, ("media_type", "type")),
-                    likes=first(item, ("likes", "like_count")),
-                    comments=first(item, ("comments", "comment_count")),
-                    views=first(item, ("views", "view_count")),
+                    author=safe_text(first(item, ("author", "username", "nickname"))),
+                    format=safe_text(first(item, ("media_type", "type"))),
+                    likes=safe_text(first(item, ("likes", "like_count"))),
+                    comments=safe_text(first(item, ("comments", "comment_count"))),
+                    views=safe_text(first(item, ("views", "view_count"))),
                     url=markdown_url(item["url"]),
                 )
             )
@@ -543,6 +550,36 @@ def build_report(
     return "\n".join(lines)
 
 
+def build_json_report(
+    goal: str,
+    decision: dict[str, Any],
+    items: list[dict[str, str]],
+    jev_ms: int,
+    socai_ms: int,
+    note: str = "",
+) -> str:
+    """Render the same projected evidence as a deterministic JSON report."""
+    report = {
+        "schema_version": 1,
+        "goal": compact_text(goal, 240),
+        "route": {
+            "name": decision["route"],
+            "platform": decision["platform"],
+            "confidence": decision["confidence"],
+        },
+        "result_count": len(items),
+        "evidence": items,
+        "run_status": note or None,
+        "timing_ms": {"jev": jev_ms, "socai": socai_ms},
+        "limits": [
+            "This is a bounded search result, not a representative survey of the platform.",
+            "Missing text or metrics mean unavailable evidence, not a zero value.",
+            "Open each source before using a finding in a consequential decision.",
+        ],
+    }
+    return json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True)
+
+
 def load_fixture(path: Path, requested_platform: str) -> tuple[dict[str, Any], Any]:
     """Load a bounded local fixture for a no-key demo and CI."""
     if not path.is_absolute():
@@ -576,7 +613,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         const="fixtures/sample_socai.json",
         help="Run without network or browser; optionally provide a fixture path.",
     )
-    parser.add_argument("--output", type=Path, help="Also write the Markdown report here.")
+    parser.add_argument(
+        "--format", choices=("markdown", "json"), default="markdown"
+    )
+    parser.add_argument("--output", type=Path, help="Also write the selected report here.")
     return parser.parse_args(argv)
 
 
@@ -614,9 +654,9 @@ def main(argv: list[str] | None = None) -> int:
             )
 
         items = project_records(payload, decision["platform"], args.limit)
-        report = build_report(
-            goal, decision, items, jev_ms, socai_ms, outcome_note(payload)
-        )
+        note = outcome_note(payload)
+        renderer = build_json_report if args.format == "json" else build_report
+        report = renderer(goal, decision, items, jev_ms, socai_ms, note)
         print(report)
         if args.output:
             args.output.expanduser().write_text(report, encoding="utf-8")
