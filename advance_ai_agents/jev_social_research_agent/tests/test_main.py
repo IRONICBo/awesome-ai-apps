@@ -21,6 +21,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 def decision(route: str = "tiktok_search", confidence: float = 0.87) -> dict:
+    """Build a minimal Jev response fixture."""
     return {
         "model": "~typesafe/jev-latest",
         "answers": {
@@ -36,11 +37,13 @@ def decision(route: str = "tiktok_search", confidence: float = 0.87) -> dict:
 
 class DecisionTests(unittest.TestCase):
     def test_accepts_typed_route(self) -> None:
+        """Accept a well-formed supported route."""
         chosen = MODULE.validate_decision(decision(), "auto")
         self.assertEqual(chosen["platform"], "tiktok")
         self.assertEqual(chosen["confidence"], 0.87)
 
     def test_rejects_malformed_or_conflicting_routes(self) -> None:
+        """Reject malformed, unsupported, conflicting, or invalid decisions."""
         malformed = ([], {"answers": []}, {"answers": {"route": []}})
         for payload in malformed:
             with self.subTest(payload=payload), self.assertRaises(MODULE.JevSocialError):
@@ -55,6 +58,7 @@ class DecisionTests(unittest.TestCase):
 
 class ExecutionTests(unittest.TestCase):
     def make_socai(self, root: Path) -> Path:
+        """Create a fake socai binary that validates its security boundary."""
         script = root / "socai"
         script.write_text(
             "#!/usr/bin/env python3\n"
@@ -74,6 +78,7 @@ class ExecutionTests(unittest.TestCase):
         return script
 
     def test_fixed_command_and_credential_isolation(self) -> None:
+        """Keep the command fixed and the OpenRouter credential isolated."""
         with tempfile.TemporaryDirectory() as temp_dir:
             executable = self.make_socai(Path(temp_dir))
             command = MODULE.build_socai_command(
@@ -92,6 +97,7 @@ class ExecutionTests(unittest.TestCase):
             self.assertNotIn("local_path", json.dumps(items))
 
     def test_combined_output_is_bounded(self) -> None:
+        """Reject output whose combined streams exceed the configured cap."""
         with tempfile.TemporaryDirectory() as temp_dir:
             script = Path(temp_dir) / "socai-flood"
             script.write_text(
@@ -112,6 +118,7 @@ class ExecutionTests(unittest.TestCase):
                 )
 
     def test_inherited_output_handles_do_not_defeat_timeout(self) -> None:
+        """Return promptly when a descendant inherits output handles."""
         child = (
             "import subprocess, sys; "
             "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(2)']); "
@@ -126,6 +133,7 @@ class ExecutionTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 0.8)
 
     def test_descendant_cannot_write_after_leader_exits(self) -> None:
+        """Terminate descendants even after their process-group leader exits."""
         with tempfile.TemporaryDirectory() as temp_dir:
             marker = Path(temp_dir) / "escaped-write"
             grandchild = (
@@ -145,6 +153,7 @@ class ExecutionTests(unittest.TestCase):
             self.assertFalse(marker.exists())
 
     def test_timeout_terminates_the_process_group(self) -> None:
+        """Terminate the full subprocess group when the deadline expires."""
         child = (
             "import subprocess, sys, time; "
             "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(5)']); "
@@ -160,11 +169,13 @@ class ExecutionTests(unittest.TestCase):
 
 class EvidenceTests(unittest.TestCase):
     def test_safe_text_preserves_neutralized_urls(self) -> None:
+        """Keep URL text readable after neutralizing Markdown markers."""
         rendered = MODULE.safe_text("visit https://example.com/#topic")
         self.assertEqual(rendered, "visit https&#58;//example.com/\\#topic")
         self.assertNotIn("&\\#58;", rendered)
 
     def test_filters_wrong_hosts_and_neutralizes_markdown(self) -> None:
+        """Reject off-platform URLs and neutralize untrusted Markdown text."""
         payload = {
             "results": [
                 {
@@ -189,6 +200,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("instagram.com", report)
 
     def test_fixture_path_runs_without_network_or_browser(self) -> None:
+        """Render the Markdown fixture without credentials or browser access."""
         stdout = io.StringIO()
         with redirect_stdout(stdout):
             status = MODULE.main(
@@ -205,6 +217,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertNotIn("raw_debug", report)
 
     def test_fixture_json_report_has_stable_public_schema(self) -> None:
+        """Render only the documented public fields in deterministic JSON."""
         stdout = io.StringIO()
         with redirect_stdout(stdout):
             status = MODULE.main(
