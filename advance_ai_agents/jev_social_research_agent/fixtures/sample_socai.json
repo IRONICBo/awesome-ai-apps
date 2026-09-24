@@ -62,5 +62,28 @@
         "token": "never-project-unknown-fields"
       }
     ]
+  },
+  "synthesis": {
+    "model": "Qwen/Qwen3-30B-A3B",
+    "summary": "The four records favor compact, process-led formats over unsupported platform-wide conclusions. Workflow demonstrations, behind-the-scenes explanations, and audience participation recur in the captured evidence.",
+    "findings": [
+      {
+        "claim": "Process and workflow explanations appear across three captured formats.",
+        "evidence_ids": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "claim": "One captured post turns audience feedback into the next experiment.",
+        "evidence_ids": [
+          4
+        ]
+      }
+    ],
+    "caveats": [
+      "Four selected records cannot establish a platform-wide trend."
+    ]
   }
 }
