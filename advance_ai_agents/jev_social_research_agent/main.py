@@ -1052,6 +1052,11 @@ def main(argv: list[str] | None = None) -> int:
             socai_ms = 0
         else:
             fixture_synthesis = None
+            nebius_api_key = os.environ.get("NEBIUS_API_KEY", "").strip()
+            if not args.no_synthesis and not nebius_api_key:
+                raise JevSocialError(
+                    "NEBIUS_API_KEY is not set; pass --no-synthesis for an evidence-only report."
+                )
             decision, jev_ms = call_jev(
                 goal,
                 args.platform,
@@ -1087,7 +1092,7 @@ def main(argv: list[str] | None = None) -> int:
                     goal,
                     decision["platform"],
                     items,
-                    os.environ.get("NEBIUS_API_KEY", "").strip(),
+                    nebius_api_key,
                     os.environ.get("NEBIUS_MODEL", DEFAULT_NEBIUS_MODEL).strip()
                     or DEFAULT_NEBIUS_MODEL,
                 )

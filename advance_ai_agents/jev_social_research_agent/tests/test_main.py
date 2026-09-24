@@ -9,7 +9,7 @@ import sys
 import tempfile
 import time
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
@@ -57,6 +57,23 @@ class DecisionTests(unittest.TestCase):
 
 
 class SynthesisTests(unittest.TestCase):
+    def test_live_synthesis_requires_nebius_key_before_external_work(self) -> None:
+        """Fail before Jev or browser work when live synthesis cannot run."""
+        stderr = io.StringIO()
+        with (
+            patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-key"}, clear=True),
+            patch.object(MODULE, "call_jev") as call_jev,
+            patch.object(MODULE, "run_socai") as run_socai,
+            redirect_stderr(stderr),
+        ):
+            status = MODULE.main(["Compare creator formats"])
+
+        self.assertEqual(status, 1)
+        self.assertIn("NEBIUS_API_KEY is not set", stderr.getvalue())
+        self.assertIn("--no-synthesis", stderr.getvalue())
+        call_jev.assert_not_called()
+        run_socai.assert_not_called()
+
     def test_request_contains_only_projected_public_evidence(self) -> None:
         """Keep local and unknown fields out of the Nebius request."""
         request = MODULE.synthesis_request(
