@@ -54,6 +54,8 @@ The model never writes a command. Its answer is accepted only when it matches th
 
 ### Environment Variables
 
+Complete the installation below first, then run these commands from `awesome-ai-apps/advance_ai_agents/jev_social_research_agent`.
+
 #### Bash
 
 ```bash
