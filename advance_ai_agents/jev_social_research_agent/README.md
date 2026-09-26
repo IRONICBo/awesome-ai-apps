@@ -4,7 +4,7 @@
 
 > Route a social research goal with Jev, collect evidence through the local socai CLI, and synthesize a source-linked brief with Nebius Token Factory.
 
-This advanced-agent example demonstrates a narrow decision boundary between model inference and browser execution. [Jev](https://typesafe.ai/) selects exactly one typed route; [socai](https://github.com/socai-io/socai) performs one read-only search in a browser session it already supports; and a [Nebius Token Factory](https://tokenfactory.nebius.com/) model synthesizes only the projected, source-linked evidence. The Python adapter validates all three boundaries and retains only public evidence fields and platform URLs.
+This advanced-agent example demonstrates a narrow decision boundary between model inference and browser execution. [Jev](https://typesafe.ai/) selects exactly one typed route; the local socai CLI performs one read-only search in a browser session it already supports; and a [Nebius Token Factory](https://tokenfactory.nebius.com/) model synthesizes only the projected, source-linked evidence. The Python adapter validates all three boundaries and retains only public evidence fields and platform URLs.
 
 It is a compact reference implementation of the pattern used by [Jev Social](https://github.com/socai-io/jev-social), not a replacement for its multi-step research UI.
 
@@ -54,7 +54,7 @@ Jev never writes a command. Its answer is accepted only when it matches the clos
 ### Prerequisites
 
 - Python 3.10 or newer.
-- For the live path: an [OpenRouter API key](https://openrouter.ai/keys), a [Nebius Token Factory API key](https://tokenfactory.nebius.com/), a compatible [socai CLI](https://github.com/socai-io/socai), and a browser session supported by socai.
+- For the live path: an [OpenRouter API key](https://openrouter.ai/keys), a [Nebius Token Factory API key](https://tokenfactory.nebius.com/), a compatible [socai CLI configured for Jev Social](https://github.com/socai-io/jev-social#run-it), and a browser session supported by socai.
 - No credentials or browser are required for the fixture demo and tests.
 
 ### Environment Variables
@@ -195,5 +195,5 @@ This example is distributed under the repository MIT license.
 
 - [Jev by TypeSafe](https://typesafe.ai/) for typed decision routing.
 - [Nebius Token Factory](https://tokenfactory.nebius.com/) for evidence-linked synthesis.
-- [socai](https://github.com/socai-io/socai) for local-browser social workflows.
+- The local socai CLI for browser execution.
 - [Jev Social](https://github.com/socai-io/jev-social) for the browser-grounded research pattern.
